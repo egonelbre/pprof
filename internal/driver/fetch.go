@@ -28,6 +28,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/google/pprof/internal/measurement"
 	"github.com/google/pprof/internal/plugin"
@@ -389,12 +390,21 @@ func collectMappingSources(p *profile.Profile, source string) plugin.MappingSour
 // set to the remote source URL by collectMappingSources back to empty string.
 func unsourceMappings(p *profile.Profile) {
 	for _, m := range p.Mapping {
-		if m.BuildID == "" {
+		if m.BuildID == "" && !isWindowsAbsPath(m.File) {
 			if u, err := url.Parse(m.File); err == nil && u.IsAbs() {
 				m.File = ""
 			}
 		}
 	}
+}
+
+// isWindowsAbsPath detects whether path starts with drive letter such as "C:\".
+func isWindowsAbsPath(path string) bool {
+	if len(path) < 3 {
+		return false
+	}
+	// This catches most Windows absolute paths.
+	return unicode.IsLetter(rune(path[0])) && path[1] == ':' && (path[2] == '/' || path[2] == '\\')
 }
 
 // locateBinaries searches for binary files listed in the profile and, if found,

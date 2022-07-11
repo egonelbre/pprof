@@ -130,6 +130,8 @@ func TestUnsourceMappings(t *testing.T) {
 	}{
 		{"/usr/bin/binary", "buildId", "/usr/bin/binary"},
 		{"http://example.com", "", ""},
+		{`C:\example.exe`, "", `C:\example.exe`},
+		{`c:/example.exe`, "", `c:/example.exe`},
 	} {
 		p := &profile.Profile{
 			Mapping: []*profile.Mapping{
