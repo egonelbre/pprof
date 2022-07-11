@@ -407,6 +407,14 @@ func isWindowsAbsPath(path string) bool {
 	return unicode.IsLetter(rune(path[0])) && path[1] == ':' && (path[2] == '/' || path[2] == '\\')
 }
 
+// trimWindowsVolume removes windows volume name from path, if it exists.
+func trimWindowsVolume(path string) string {
+	if isWindowsAbsPath(path) {
+		return path[3:]
+	}
+	return path
+}
+
 // locateBinaries searches for binary files listed in the profile and, if found,
 // updates the profile accordingly.
 func locateBinaries(p *profile.Profile, s *source, obj plugin.ObjTool, ui plugin.UI) {
@@ -422,7 +430,7 @@ mapping:
 		var dirName string
 		if m.File != "" {
 			baseName = filepath.Base(m.File)
-			dirName = filepath.Dir(m.File)
+			dirName = trimWindowsVolume(filepath.Dir(m.File))
 		}
 
 		for _, path := range filepath.SplitList(searchPath) {
@@ -442,10 +450,10 @@ mapping:
 				// Try both the basename and the full path, to support the same directory
 				// structure as the perf symfs option.
 				fileNames = append(fileNames, filepath.Join(path, baseName))
-				fileNames = append(fileNames, filepath.Join(path, m.File))
+				fileNames = append(fileNames, filepath.Join(path, trimWindowsVolume(m.File)))
 				// Other locations: use the same search paths as GDB, according to
 				// https://sourceware.org/gdb/onlinedocs/gdb/Separate-Debug-Files.html
-				fileNames = append(fileNames, filepath.Join(path, m.File+".debug"))
+				fileNames = append(fileNames, filepath.Join(path, trimWindowsVolume(m.File)+".debug"))
 				fileNames = append(fileNames, filepath.Join(path, dirName, ".debug", baseName+".debug"))
 				fileNames = append(fileNames, filepath.Join(path, "usr", "lib", "debug", dirName, baseName+".debug"))
 			}
